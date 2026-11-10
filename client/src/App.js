@@ -44,7 +44,7 @@ function App() {
   const token = session?.token;
   const routes = { notes: '/notes', all: '/admin/notes', users: '/admin/users', interests: '/admin/interests' };
   const path = view === 'posts'
-    ? author && '/users/' + encodeURIComponent(author) + '/posts'
+    ? token && author && '/users/' + encodeURIComponent(author) + '/posts'
     : token && routes[view];
 
   useEffect(() => {
@@ -94,7 +94,7 @@ function App() {
       interests: form.interests.split(',').map(value => value.trim()).filter(Boolean) };
   }
 
-  const items = data?.data ?? data?.items;
+  const items = data?.data;
 
   return <main>
     <h1>Secure Notes</h1>
@@ -105,7 +105,7 @@ function App() {
         <button onClick={() => changeView('users')}>Users</button>
         <button onClick={() => changeView('interests')}>Interest groups</button>
       </>}
-      <button onClick={() => changeView('posts')}>Public posts</button>
+      {session && <button onClick={() => changeView('posts')}>Posts</button>}
       {session && <button onClick={() => {
         setSession(null);
         setAuthor('');
@@ -117,7 +117,7 @@ function App() {
     {session && <p>Signed in as {session.user.email} ({session.user.role}). User ID <code>{session.user._id}</code></p>}
     {error && <p role="alert">{error}</p>}
 
-    {!session && view !== 'posts' && <section>
+    {!session && <section>
       <h2>{register ? 'Create an account' : 'Sign in'}</h2>
       <form onSubmit={event => submit(event, async () => {
         const nextSession = await request(register ? '/auth/register' : '/auth/login', null, 'POST', userPayload(credentials));
@@ -172,9 +172,8 @@ function App() {
       </form>
     </section>}
 
-    {view === 'posts' && <section>
-      <h2>Public posts</h2>
-      {!session && <button onClick={() => changeView('notes')}>Back to sign in</button>}
+    {session && view === 'posts' && <section>
+      <h2>Posts</h2>
       <form onSubmit={event => {
         event.preventDefault();
         setError('');
@@ -218,7 +217,7 @@ function App() {
             refresh();
           })}>Delete</button>}
       </article>)}
-      <Pager page={page} hasMore={data.total === undefined ? data.hasMore : page * data.limit < data.total} setPage={next => { setError(''); setPage(next); }} />
+      <Pager page={page} hasMore={page * data.limit < data.total} setPage={next => { setError(''); setPage(next); }} />
     </>}
   </main>;
 }

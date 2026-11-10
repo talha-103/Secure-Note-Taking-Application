@@ -8,7 +8,8 @@ import { createAuthService } from './modules/auth/auth.service.js';
 import { createAuthRouter } from './modules/auth/auth.routes.js';
 import { notes } from './modules/notes/notes.service.js';
 import { createNotesRouter } from './modules/notes/notes.routes.js';
-import { createLegacyRouter } from './legacy.routes.js';
+import { createPostsRouter } from './modules/posts/posts.routes.js';
+import { createPostsService } from './modules/posts/posts.service.js';
 
 /** Creates the Express app without opening a network listener. */
 export function createApp({
@@ -16,6 +17,7 @@ export function createApp({
   accountStore = users,
   userService = users,
   noteService = notes,
+  postService = createPostsService(userService),
 } = {}) {
   const app = express();
   const auth = createAuthService(accountStore, env);
@@ -23,7 +25,7 @@ export function createApp({
   app.use('/api/auth', createAuthRouter(auth));
   app.use('/api', createUsersRouter(auth, userService));
   app.use('/api', createNotesRouter(auth, noteService));
-  app.use('/api', createLegacyRouter(auth, userService));
+  app.use('/api', createPostsRouter(auth, postService));
   app.use('/api', (req, res) =>
     res.status(404).json({ error: 'Endpoint not found' }),
   );
