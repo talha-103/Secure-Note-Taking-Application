@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
-import { Note, Post } from '../../models.js';
+import { Post } from '../../models.js';
+import { Note } from '../modules/notes/notes.model.js';
 import { User } from '../modules/users/users.model.js';
 
 /** Connects to MongoDB and waits for the application indexes to initialize. */

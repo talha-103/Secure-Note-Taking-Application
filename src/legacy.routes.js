@@ -1,8 +1,7 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { Note, Post } from '../models.js';
+import { Post } from '../models.js';
 import { requireAuth } from './middleware/requireAuth.js';
-import { requireRole } from './middleware/requireRole.js';
 
 /** Preserves existing feature routes while their modules are migrated. */
 export function createLegacyRouter(auth, users) {
@@ -43,19 +42,6 @@ export function createLegacyRouter(auth, users) {
       hasMore: items.length > limit,
     });
   }
-  async function list(req, res, query) {
-    const pagingOptions = paging(req);
-    const { skip, limit } = pagingOptions;
-    paged(
-      res,
-      await query
-        .sort({ _id: -1 })
-        .skip(skip)
-        .limit(limit + 1)
-        .lean(),
-      pagingOptions,
-    );
-  }
   function contentFields(body) {
     return {
       title: string(body?.title, 'title', 200),
@@ -92,41 +78,5 @@ export function createLegacyRouter(auth, users) {
         await Post.create({ ...contentFields(req.body), author: req.user._id }),
       );
   });
-  api.get('/notes', (req, res) =>
-    list(req, res, Note.find({ owner: req.user._id })),
-  );
-  api.post('/notes', async (req, res) => {
-    res
-      .status(201)
-      .json(
-        await Note.create({ ...contentFields(req.body), owner: req.user._id }),
-      );
-  });
-  api.get('/notes/:id', async (req, res) => {
-    const filter = { _id: id(req.params.id) };
-    if (req.user.role !== 'admin') filter.owner = req.user._id;
-    const note = await Note.findOne(filter);
-    if (!note) fail(404, 'Note not found');
-    res.json(note);
-  });
-  api.put('/notes/:id', async (req, res) => {
-    const note = await Note.findOneAndUpdate(
-      { _id: id(req.params.id), owner: req.user._id },
-      contentFields(req.body),
-      { new: true },
-    );
-    if (!note) fail(404, 'Note not found');
-    res.json(note);
-  });
-  api.delete('/notes/:id', async (req, res) => {
-    const note = await Note.findOneAndDelete({
-      _id: id(req.params.id),
-      owner: req.user._id,
-    });
-    if (!note) fail(404, 'Note not found');
-    res.sendStatus(204);
-  });
-  api.use('/admin', requireRole('admin'));
-  api.get('/admin/notes', (req, res) => list(req, res, Note.find()));
   return api;
 }
