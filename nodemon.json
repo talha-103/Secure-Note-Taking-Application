@@ -1,0 +1,4 @@
+{
+  "watch": ["index.js", "models.js", "src"],
+  "exec": "node --env-file-if-exists=.env index.js"
+}
