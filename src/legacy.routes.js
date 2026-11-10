@@ -1,12 +1,11 @@
 import express from 'express';
 import mongoose from 'mongoose';
-import { User, Note, Post } from '../models.js';
-import { hashPassword } from './modules/auth/password.js';
+import { Note, Post } from '../models.js';
 import { requireAuth } from './middleware/requireAuth.js';
 import { requireRole } from './middleware/requireRole.js';
 
 /** Preserves existing feature routes while their modules are migrated. */
-export function createLegacyRouter(auth) {
+export function createLegacyRouter(auth, users) {
   const api = express.Router();
   function fail(status, message) {
     throw Object.assign(new Error(message), { status });
@@ -17,12 +16,6 @@ export function createLegacyRouter(auth) {
     if (result.length < min || result.length > max)
       fail(400, 'Invalid ' + name + ' length');
     return result;
-  }
-  function email(value) {
-    const normalized = string(value, 'email', 254).toLowerCase();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized))
-      fail(400, 'Invalid email');
-    return normalized;
   }
   function id(value) {
     if (!mongoose.isObjectIdOrHexString(value)) fail(400, 'Invalid ID');
@@ -63,37 +56,6 @@ export function createLegacyRouter(auth) {
       pagingOptions,
     );
   }
-  async function userFields(body, partial = false, allowRole = false) {
-    if (!body || typeof body !== 'object' || Array.isArray(body))
-      fail(400, 'Expected an object');
-    const fields = {};
-    if (!partial || body.email !== undefined) fields.email = email(body.email);
-    if (!partial || body.password !== undefined) {
-      fields.passwordHash = await hashPassword(
-        string(body.password, 'password', 256, 8, false),
-      );
-    }
-    if (body.interests !== undefined) {
-      if (!Array.isArray(body.interests) || body.interests.length > 25)
-        fail(400, 'Invalid interests');
-      fields.interests = [
-        ...new Set(
-          body.interests.map((value) =>
-            string(value, 'interest', 80).toLowerCase(),
-          ),
-        ),
-      ];
-    }
-    if (allowRole && body.role !== undefined) {
-      if (!['user', 'admin'].includes(body.role)) fail(400, 'Invalid role');
-      fields.role = body.role;
-    }
-    return fields;
-  }
-  function publicUser(user) {
-    const { _id, email, role, interests } = user;
-    return { _id, email, role, interests };
-  }
   function contentFields(body) {
     return {
       title: string(body?.title, 'title', 200),
@@ -102,7 +64,7 @@ export function createLegacyRouter(auth) {
   }
   api.get('/users/:id/posts', async (req, res) => {
     const options = paging(req);
-    const [result] = await User.aggregate([
+    const [result] = await users.aggregate([
       { $match: { _id: id(req.params.id) } },
       {
         $lookup: {
@@ -123,7 +85,6 @@ export function createLegacyRouter(auth) {
     paged(res, result.items, options);
   });
   api.use(requireAuth(auth));
-  api.get('/me', (req, res) => res.json(publicUser(req.user)));
   api.post('/posts', async (req, res) => {
     res
       .status(201)
@@ -167,57 +128,5 @@ export function createLegacyRouter(auth) {
   });
   api.use('/admin', requireRole('admin'));
   api.get('/admin/notes', (req, res) => list(req, res, Note.find()));
-  api.get('/admin/users', (req, res) =>
-    list(req, res, User.find().select('email role interests')),
-  );
-  api.post('/admin/users', async (req, res) => {
-    res
-      .status(201)
-      .json(
-        publicUser(await User.create(await userFields(req.body, false, true))),
-      );
-  });
-  api.get('/admin/users/:id', async (req, res) => {
-    const user = await User.findById(id(req.params.id));
-    if (!user) fail(404, 'User not found');
-    res.json(publicUser(user));
-  });
-  api.patch('/admin/users/:id', async (req, res) => {
-    const userId = id(req.params.id);
-    const fields = await userFields(req.body, true, true);
-    if (req.user._id.equals(userId) && fields.role === 'user')
-      fail(400, 'You cannot demote yourself');
-    if (!Object.keys(fields).length) fail(400, 'No changes supplied');
-    const user = await User.findByIdAndUpdate(userId, fields, {
-      new: true,
-      runValidators: true,
-    });
-    if (!user) fail(404, 'User not found');
-    res.json(publicUser(user));
-  });
-  api.delete('/admin/users/:id', async (req, res) => {
-    const userId = id(req.params.id);
-    if (req.user._id.equals(userId)) fail(400, 'You cannot delete yourself');
-    if (!(await User.findByIdAndDelete(userId))) fail(404, 'User not found');
-    res.sendStatus(204);
-  });
-  api.get('/admin/interests', async (req, res) => {
-    const options = paging(req);
-    const items = await User.aggregate([
-      { $sort: { _id: 1 } },
-      { $project: { interests: 1, email: 1 } },
-      { $unwind: '$interests' },
-      {
-        $group: {
-          _id: '$interests',
-          users: { $push: { _id: '$_id', email: '$email' } },
-        },
-      },
-      { $sort: { _id: 1 } },
-      { $skip: options.skip },
-      { $limit: options.limit + 1 },
-    ]);
-    paged(res, items, options);
-  });
   return api;
 }

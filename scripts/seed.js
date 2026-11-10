@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { User } from '../models.js';
+import { User } from '../src/modules/users/users.model.js';
 import { hashPassword } from '../src/modules/auth/password.js';
 
 async function createAdmin() {

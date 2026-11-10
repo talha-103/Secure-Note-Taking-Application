@@ -94,6 +94,8 @@ function App() {
       interests: form.interests.split(',').map(value => value.trim()).filter(Boolean) };
   }
 
+  const items = data?.data ?? data?.items;
+
   return <main>
     <h1>Secure Notes</h1>
     <nav aria-label="Main navigation">
@@ -153,6 +155,7 @@ function App() {
       <form onSubmit={event => submit(event, async () => {
         const payload = userPayload(user);
         if (user._id && !payload.password) delete payload.password;
+        if (user._id === session.user._id) delete payload.role;
         await request('/admin/users' + (user._id ? '/' + user._id : ''), token, user._id ? 'PATCH' : 'POST', payload);
         if (!user._id) setPage(1);
         setUser(emptyUser);
@@ -161,7 +164,7 @@ function App() {
         <label>Email<input type="email" required value={user.email} onChange={event => setUser({ ...user, email: event.target.value })} /></label>
         <label>{user._id ? 'New password (optional)' : 'Password'}<input type="password" minLength={8} required={!user._id} value={user.password} onChange={event => setUser({ ...user, password: event.target.value })} /></label>
         <label>Interests (comma separated)<input value={user.interests} onChange={event => setUser({ ...user, interests: event.target.value })} /></label>
-        <label>Role<select value={user.role} onChange={event => setUser({ ...user, role: event.target.value })}>
+        <label>Role<select disabled={user._id === session.user._id} value={user.role} onChange={event => setUser({ ...user, role: event.target.value })}>
           <option value="user">User</option><option value="admin">Admin</option>
         </select></label>
         <button disabled={busy}>{user._id ? 'Save user' : 'Add user'}</button>
@@ -197,8 +200,8 @@ function App() {
     </section>}
 
     {data && <>
-      {data.items.length === 0 && <p>No results on this page.</p>}
-      {data.items.map(item => <article key={item._id}>
+      {items.length === 0 && <p>No results on this page.</p>}
+      {items.map(item => <article key={item._id}>
         <h3>{item.title || item.email || item._id}</h3>
         {item.content && <p className="content">{item.content}</p>}
         {view === 'all' && <p>Owner <code>{item.owner}</code></p>}
@@ -211,11 +214,11 @@ function App() {
             await request((view === 'notes' ? '/notes/' : '/admin/users/') + item._id, token, 'DELETE');
             if (view === 'notes' && note._id === item._id) setNote(emptyNote);
             if (view === 'users' && user._id === item._id) setUser(emptyUser);
-            if (data.items.length === 1 && page > 1) setPage(page - 1);
+            if (items.length === 1 && page > 1) setPage(page - 1);
             refresh();
           })}>Delete</button>}
       </article>)}
-      <Pager page={page} hasMore={data.hasMore} setPage={next => { setError(''); setPage(next); }} />
+      <Pager page={page} hasMore={data.total === undefined ? data.hasMore : page * data.limit < data.total} setPage={next => { setError(''); setPage(next); }} />
     </>}
   </main>;
 }
