@@ -28,10 +28,7 @@ function Layout() {
             )}
             <button onClick={() => signOut()}>Sign out</button>
           </nav>
-          <p>
-            Signed in as {user.name ? user.name + ' · ' : ''}
-            {user.email}
-          </p>
+          <p>Signed in as {user.name ? user.name : user.email}</p>
         </>
       )}
       <Outlet />
