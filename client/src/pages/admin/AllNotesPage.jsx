@@ -9,14 +9,14 @@ export default function AllNotesPage() {
       <h2>All notes</h2>
       <PagedList
         listing={listing}
+        columns={['Title', 'Content', 'Name', 'Email']}
         renderItem={(note) => (
-          <article key={note._id}>
-            <h3>{note.title}</h3>
-            <p>{note.content}</p>
-            <p>
-              Owner <code>{note.owner}</code>
-            </p>
-          </article>
+          <tr key={note._id}>
+            <td>{note.title}</td>
+            <td>{note.content}</td>
+            <td>{note.ownerProfile?.name || '—'}</td>
+            <td>{note.ownerProfile?.email || '—'}</td>
+          </tr>
         )}
       />
     </section>

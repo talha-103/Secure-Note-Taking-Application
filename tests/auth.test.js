@@ -44,11 +44,13 @@ test('registers a user with bcrypt and issues a token using the configured expir
   const result = await api
     .post('/api/auth/register')
     .send({
+      name: ' Test User ',
       email: ' USER@example.com ',
       password,
       role: 'admin',
     })
     .expect(201);
+  assert.equal(result.body.user.name, 'Test User');
   assert.equal(result.body.user.role, 'user');
   assert.equal(result.body.user.email, 'user@example.com');
   assert.equal(result.body.user.passwordHash, undefined);

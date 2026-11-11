@@ -9,16 +9,16 @@ export default function InterestsPage() {
       <h2>Interest groups</h2>
       <PagedList
         listing={listing}
-        renderItem={(group) => (
-          <article key={group._id}>
-            <h3>{group._id}</h3>
-            <ul>
-              {group.users.map((user) => (
-                <li key={user._id}>{user.email}</li>
-              ))}
-            </ul>
-          </article>
-        )}
+        columns={['Interest', 'Name', 'Email']}
+        renderItem={(group) =>
+          group.users.map((user) => (
+            <tr key={group._id + ':' + user._id}>
+              <td>{group._id}</td>
+              <td>{user.name || '—'}</td>
+              <td>{user.email}</td>
+            </tr>
+          ))
+        }
       />
     </section>
   );

@@ -7,7 +7,7 @@ import { useAction } from '../components/useAction';
 import { usePage } from '../components/usePage';
 
 export default function NotesPage() {
-  const { http } = useAuth();
+  const { http, user } = useAuth();
   const [note, setNote] = useState(emptyContent);
   const listing = usePage(listNotes);
   const { busy, error, run } = useAction();
@@ -34,28 +34,33 @@ export default function NotesPage() {
       />
       <PagedList
         listing={listing}
+        columns={['Title', 'Content', 'Name', 'Email', 'Actions']}
         renderItem={(item) => (
-          <article key={item._id}>
-            <h3>{item.title}</h3>
-            <p>{item.content}</p>
-            <button disabled={busy} onClick={() => setNote(item)}>
-              Edit
-            </button>
-            <button
-              disabled={busy}
-              onClick={() =>
-                run(async () => {
-                  await deleteNote(http, item._id);
-                  if (item._id === note._id) setNote(emptyContent);
-                  if (listing.result.data.length === 1 && listing.page > 1)
-                    listing.setPage(listing.page - 1);
-                  listing.refresh();
-                })
-              }
-            >
-              Delete
-            </button>
-          </article>
+          <tr key={item._id}>
+            <td>{item.title}</td>
+            <td>{item.content}</td>
+            <td>{user.name || '—'}</td>
+            <td>{user.email}</td>
+            <td>
+              <button disabled={busy} onClick={() => setNote(item)}>
+                Edit
+              </button>
+              <button
+                disabled={busy}
+                onClick={() =>
+                  run(async () => {
+                    await deleteNote(http, item._id);
+                    if (item._id === note._id) setNote(emptyContent);
+                    if (listing.result.data.length === 1 && listing.page > 1)
+                      listing.setPage(listing.page - 1);
+                    listing.refresh();
+                  })
+                }
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
         )}
       />
     </section>

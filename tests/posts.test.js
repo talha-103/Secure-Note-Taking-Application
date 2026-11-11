@@ -90,3 +90,24 @@ test('assigns the authenticated author and validates the publishing payload', as
     author: viewer,
   });
 });
+
+test('looks up posts by normalized email and returns the author identity', async () => {
+  const { signedIn } = setup((pipeline) => {
+    assert.deepEqual(pipeline[0], { $match: { email: 'author@example.com' } });
+    return [
+      {
+        name: 'Taylor',
+        email: 'author@example.com',
+        posts: [{ data: [], count: [] }],
+      },
+    ];
+  });
+  const result = await signedIn(
+    'get',
+    '/api/posts?email=AUTHOR%40example.com',
+  ).expect(200);
+  assert.deepEqual(result.body.author, {
+    name: 'Taylor',
+    email: 'author@example.com',
+  });
+});

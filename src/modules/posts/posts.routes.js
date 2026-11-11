@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { email } from '../auth/auth.schema.js';
 import { requireAuth } from '../../middleware/requireAuth.js';
 import { validate } from '../../middleware/validate.js';
 import { paginationSchema } from '../../utils/paginate.js';
@@ -11,6 +12,12 @@ export function createPostsRouter(auth, posts) {
   const router = Router();
   const controller = createPostsController(posts);
   const signedIn = requireAuth(auth);
+  router.get(
+    '/posts',
+    signedIn,
+    validate({ query: paginationSchema.extend({ email }) }),
+    controller.listByEmail,
+  );
   router.post(
     '/posts',
     signedIn,

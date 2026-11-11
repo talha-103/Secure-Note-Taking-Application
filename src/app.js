@@ -34,7 +34,15 @@ export function createApp({
   );
   app.use(express.static(clientBuild));
   app.get(
-    ['/notes', '/posts', '/admin/notes', '/admin/users', '/admin/interests'],
+    [
+      '/login',
+      '/register',
+      '/notes',
+      '/posts',
+      '/admin/notes',
+      '/admin/users',
+      '/admin/interests',
+    ],
     (req, res, next) => {
       res.sendFile('index.html', { root: clientBuild }, (error) => {
         if (error) next(error);

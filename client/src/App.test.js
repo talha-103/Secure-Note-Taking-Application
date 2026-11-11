@@ -77,3 +77,45 @@ test('clears the stored JWT and redirects to sign-in on a protected request retu
   ).toBeInTheDocument();
   await waitFor(() => expect(localStorage.getItem(key)).toBeNull());
 });
+
+test('shows a required name field on the registration route', async () => {
+  renderAt('/register');
+  expect(await screen.findByLabelText('Name')).toBeRequired();
+  expect(screen.getByLabelText('Email')).toBeRequired();
+  expect(screen.getByRole('link', { name: 'Sign in instead' })).toHaveAttribute(
+    'href',
+    '/login',
+  );
+});
+
+test('renders All Notes with author names and emails in a table', async () => {
+  localStorage.setItem(key, 'admin-token');
+  global.fetch = jest.fn(async (path) =>
+    path === '/api/me'
+      ? response(200, { ...user, name: 'Admin', role: 'admin' })
+      : response(200, {
+          data: [
+            {
+              _id: 'note-id',
+              owner: 'owner-id',
+              title: 'Example',
+              content: 'Body',
+              ownerProfile: { name: 'Taylor', email: 'taylor@example.com' },
+            },
+          ],
+          page: 1,
+          limit: 20,
+          total: 1,
+        }),
+  );
+  renderAt('/admin/notes');
+  await screen.findByRole('table');
+  expect(
+    screen.getAllByRole('columnheader').map((header) => header.textContent),
+  ).toEqual(['Title', 'Content', 'Name', 'Email']);
+  expect(screen.getByRole('cell', { name: 'Taylor' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('cell', { name: 'taylor@example.com' }),
+  ).toBeInTheDocument();
+  expect(screen.queryByText('owner-id')).not.toBeInTheDocument();
+});

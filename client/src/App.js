@@ -1,5 +1,7 @@
 import { Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import RegisterPage from './pages/RegisterPage';
+import './ui.css';
 import SignInPage from './pages/SignInPage';
 import NotesPage from './pages/NotesPage';
 import PostsPage from './pages/PostsPage';
@@ -26,8 +28,8 @@ function Layout() {
             <button onClick={() => signOut()}>Sign out</button>
           </nav>
           <p>
-            Signed in as {user.email} ({user.role}). User ID{' '}
-            <code>{user._id}</code>
+            Signed in as {user.name ? user.name + ' · ' : ''}
+            {user.email}
           </p>
         </>
       )}
@@ -39,7 +41,7 @@ function Layout() {
 function RequireUser({ admin = false }) {
   const { user, loading } = useAuth();
   if (loading) return <p>Checking session…</p>;
-  if (!user) return <Navigate to="/" replace />;
+  if (!user) return <Navigate to="/login" replace />;
   if (admin && user.role !== 'admin') return <Navigate to="/notes" replace />;
   return <Outlet />;
 }
@@ -49,7 +51,9 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route element={<Layout />}>
-          <Route index element={<SignInPage />} />
+          <Route index element={<Navigate to="/login" replace />} />
+          <Route path="login" element={<SignInPage />} />
+          <Route path="register" element={<RegisterPage />} />
           <Route element={<RequireUser />}>
             <Route path="notes" element={<NotesPage />} />
             <Route path="posts" element={<PostsPage />} />
@@ -59,7 +63,15 @@ export default function App() {
             <Route path="admin/users" element={<UsersPage />} />
             <Route path="admin/interests" element={<InterestsPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="*"
+            element={
+              <section>
+                <h2>Page not found</h2>
+                <Link to="/">Go home</Link>
+              </section>
+            }
+          />
         </Route>
       </Routes>
     </AuthProvider>

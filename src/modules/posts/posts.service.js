@@ -7,10 +7,14 @@ import { pageOffset, pageResult } from '../../utils/paginate.js';
 export function createPostsService(users, model = Post) {
   return {
     add: (author, fields) => model.create({ ...fields, author }),
-    async listByAuthor(author, options) {
+    async listByAuthor(author, options, byEmail = false) {
       const [result] = await users.aggregate([
-        { $match: { _id: new Types.ObjectId(author) } },
-        { $project: { _id: 1 } },
+        {
+          $match: byEmail
+            ? { email: author }
+            : { _id: new Types.ObjectId(author) },
+        },
+        { $project: { _id: 1, name: 1, email: 1 } },
         {
           $lookup: {
             from: model.collection.name,
@@ -34,11 +38,14 @@ export function createPostsService(users, model = Post) {
       ]);
       if (!result) throw new ApiError(404, 'User not found');
       const [posts] = result.posts;
-      return pageResult(
+      const page = pageResult(
         posts?.data ?? [],
         options,
         posts?.count[0]?.total ?? 0,
       );
+      return byEmail
+        ? { ...page, author: { name: result.name ?? '', email: result.email } }
+        : page;
     },
   };
 }

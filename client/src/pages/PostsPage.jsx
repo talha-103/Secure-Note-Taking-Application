@@ -8,8 +8,8 @@ import { usePage } from '../components/usePage';
 
 export default function PostsPage() {
   const { http, user } = useAuth();
-  const [authorInput, setAuthorInput] = useState(user._id);
-  const [author, setAuthor] = useState(user._id);
+  const [authorInput, setAuthorInput] = useState(user.email);
+  const [author, setAuthor] = useState(user.email);
   const [post, setPost] = useState(emptyContent);
   const load = useCallback(
     (client, page, signal) => listPosts(client, author, page, signal),
@@ -18,8 +18,8 @@ export default function PostsPage() {
   const listing = usePage(load);
   const { busy, error, run } = useAction();
 
-  function selectAuthor(id) {
-    setAuthor(id);
+  function selectAuthor(email) {
+    setAuthor(email);
     listing.setPage(1);
     listing.refresh();
   }
@@ -35,10 +35,10 @@ export default function PostsPage() {
         }}
       >
         <label>
-          Author user ID{' '}
+          Author email{' '}
           <input
             required
-            pattern="[a-fA-F0-9]{24}"
+            type="email"
             value={authorInput}
             onChange={(event) => setAuthorInput(event.target.value)}
           />
@@ -54,18 +54,21 @@ export default function PostsPage() {
           run(async () => {
             await publishPost(http, post);
             setPost(emptyContent);
-            setAuthorInput(user._id);
-            selectAuthor(user._id);
+            setAuthorInput(user.email);
+            selectAuthor(user.email);
           })
         }
       />
       <PagedList
         listing={listing}
+        columns={['Title', 'Content', 'Name', 'Email']}
         renderItem={(item) => (
-          <article key={item._id}>
-            <h3>{item.title}</h3>
-            <p>{item.content}</p>
-          </article>
+          <tr key={item._id}>
+            <td>{item.title}</td>
+            <td>{item.content}</td>
+            <td>{listing.result.author?.name || '—'}</td>
+            <td>{listing.result.author?.email || author}</td>
+          </tr>
         )}
       />
     </section>

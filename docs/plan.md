@@ -4,7 +4,8 @@ The root package serves the Express API under /api. The React client exercises t
 
 | Route            | Access    | Purpose                               |
 | ---------------- | --------- | ------------------------------------- |
-| /                | Visitor   | Sign in or register                   |
+| /login           | Visitor   | Sign in                               |
+| /register        | Visitor   | Register with name and email          |
 | /notes           | Signed in | List and manage owned notes           |
 | /posts           | Signed in | Publish posts and list them by author |
 | /admin/notes     | Admin     | View all notes                        |

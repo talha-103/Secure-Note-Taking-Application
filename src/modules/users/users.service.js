@@ -4,8 +4,8 @@ import { ApiError } from '../../utils/ApiError.js';
 import { pageOffset, pageResult } from '../../utils/paginate.js';
 
 /** Projects the account fields permitted in API responses. */
-export function publicUser({ _id, email, role, interests }) {
-  return { _id, email, role, interests };
+export function publicUser({ _id, name = '', email, role, interests }) {
+  return { _id, name, email, role, interests };
 }
 
 /** Creates account persistence and management operations. */
@@ -31,11 +31,16 @@ export function createUsersService(model = User) {
         { _id, passwordHash },
         { $set: { passwordHash: replacement } },
       ),
+    findIdentities: (ids) =>
+      model
+        .find({ _id: { $in: ids } })
+        .select('name email')
+        .lean(),
     async list(options) {
       const [data, total] = await Promise.all([
         model
           .find()
-          .select('email role interests')
+          .select('name email role interests')
           .sort({ _id: -1 })
           .skip(pageOffset(options))
           .limit(options.limit)
@@ -71,13 +76,13 @@ export function createUsersService(model = User) {
       const { interest, limit } = options;
       const [result] = await model.aggregate([
         ...(interest ? [{ $match: { interests: interest } }] : []),
-        { $project: { interests: 1, email: 1 } },
+        { $project: { interests: 1, name: 1, email: 1 } },
         { $unwind: '$interests' },
         ...(interest ? [{ $match: { interests: interest } }] : []),
         {
           $group: {
             _id: '$interests',
-            users: { $push: { _id: '$_id', email: '$email' } },
+            users: { $push: { _id: '$_id', name: '$name', email: '$email' } },
           },
         },
         {
@@ -104,4 +109,3 @@ export function createUsersService(model = User) {
 }
 
 export const users = createUsersService();
-

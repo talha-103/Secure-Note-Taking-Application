@@ -115,3 +115,43 @@ test('paginates owned notes and lets only admins list every note', async () => {
   assert.deepEqual(all.body, { data: [], page: 1, limit: 20, total: 5 });
   assert.deepEqual(calls, [{}, { _id: -1 }, 0, 20, {}]);
 });
+
+test('enriches an admin note page with owner profiles in one batch', async () => {
+  const secondId = '5f53fe68d17a92590c842814';
+  const rows = [
+    { _id, owner, title: 'First' },
+    { _id: secondId, owner, title: 'Second' },
+  ];
+  const service = createNotesService(
+    {
+      find: () => ({
+        sort() {
+          return this;
+        },
+        skip() {
+          return this;
+        },
+        limit() {
+          return this;
+        },
+        lean: () => rows,
+      }),
+      countDocuments: () => ({ hint: () => 2 }),
+    },
+    {
+      async findIdentities(ids) {
+        assert.deepEqual(ids, [owner]);
+        return [{ _id: owner, name: 'Taylor', email: 'taylor@example.com' }];
+      },
+    },
+  );
+  const result = await service.listAll({ page: 1, limit: 20 });
+  assert.equal(result.total, 2);
+  assert.deepEqual(
+    result.data.map((note) => note.ownerProfile),
+    [
+      { name: 'Taylor', email: 'taylor@example.com' },
+      { name: 'Taylor', email: 'taylor@example.com' },
+    ],
+  );
+});

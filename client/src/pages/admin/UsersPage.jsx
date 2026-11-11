@@ -6,7 +6,13 @@ import { parseInterests } from '../../components/parseInterests';
 import { useAction } from '../../components/useAction';
 import { usePage } from '../../components/usePage';
 
-const emptyUser = { email: '', password: '', interests: '', role: 'user' };
+const emptyUser = {
+  name: '',
+  email: '',
+  password: '',
+  interests: '',
+  role: 'user',
+};
 
 export default function UsersPage() {
   const { user, http } = useAuth();
@@ -25,8 +31,8 @@ export default function UsersPage() {
         onSubmit={(event) => {
           event.preventDefault();
           run(async () => {
-            const { _id, email, password, role, interests } = editing;
-            const body = { email, interests: parseInterests(interests) };
+            const { _id, name, email, password, role, interests } = editing;
+            const body = { name, email, interests: parseInterests(interests) };
             if (password || !_id) body.password = password;
             if (!ownAccount) body.role = role;
             await saveUser(http, _id, body);
@@ -36,6 +42,17 @@ export default function UsersPage() {
           });
         }}
       >
+        <p>
+          <label>
+            Name{' '}
+            <input
+              required
+              maxLength={100}
+              value={editing.name}
+              onChange={change('name')}
+            />
+          </label>
+        </p>
         <p>
           <label>
             Email{' '}
@@ -89,42 +106,45 @@ export default function UsersPage() {
       </form>
       <PagedList
         listing={listing}
+        columns={['Name', 'Email', 'Role', 'Interests', 'Actions']}
         renderItem={(item) => (
-          <article key={item._id}>
-            <h3>{item.email}</h3>
-            <p>
-              {item.role} · {item.interests.join(', ') || 'No interests'} ·{' '}
-              <code>{item._id}</code>
-            </p>
-            <button
-              disabled={busy}
-              onClick={() =>
-                setEditing({
-                  ...item,
-                  interests: item.interests.join(', '),
-                  password: '',
-                })
-              }
-            >
-              Edit
-            </button>
-            {item._id !== user._id && (
+          <tr key={item._id}>
+            <td>{item.name || '—'}</td>
+            <td>{item.email}</td>
+            <td>{item.role}</td>
+            <td>{item.interests.join(', ') || '—'}</td>
+            <td>
               <button
                 disabled={busy}
                 onClick={() =>
-                  run(async () => {
-                    await deleteUser(http, item._id);
-                    if (editing._id === item._id) setEditing(emptyUser);
-                    if (listing.result.data.length === 1 && listing.page > 1)
-                      listing.setPage(listing.page - 1);
-                    listing.refresh();
+                  setEditing({
+                    ...item,
+                    name: item.name || '',
+                    interests: item.interests.join(', '),
+                    password: '',
                   })
                 }
               >
-                Delete
+                Edit
               </button>
-            )}
-          </article>
+              {item._id !== user._id && (
+                <button
+                  disabled={busy}
+                  onClick={() =>
+                    run(async () => {
+                      await deleteUser(http, item._id);
+                      if (editing._id === item._id) setEditing(emptyUser);
+                      if (listing.result.data.length === 1 && listing.page > 1)
+                        listing.setPage(listing.page - 1);
+                      listing.refresh();
+                    })
+                  }
+                >
+                  Delete
+                </button>
+              )}
+            </td>
+          </tr>
         )}
       />
     </section>

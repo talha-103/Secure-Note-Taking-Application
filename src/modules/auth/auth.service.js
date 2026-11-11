@@ -12,19 +12,20 @@ const fallbackHash =
 /** Builds account registration, login and token verification operations. */
 export function createAuthService(accounts, { JWT_SECRET, JWT_EXPIRES_IN }) {
   function session(user) {
-    const { _id, email, role, interests } = user;
+    const { _id, name = '', email, role, interests } = user;
     const token = jwt.sign({}, JWT_SECRET, {
       algorithm: 'HS256',
       subject: String(_id),
       expiresIn: JWT_EXPIRES_IN,
     });
-    return { user: { _id, email, role, interests }, token };
+    return { user: { _id, name, email, role, interests }, token };
   }
 
   return {
-    async register({ email, password, interests }) {
+    async register({ name, email, password, interests }) {
       return session(
         await accounts.create({
+          name,
           email,
           passwordHash: await hashPassword(password),
           interests,
