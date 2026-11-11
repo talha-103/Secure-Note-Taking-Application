@@ -1,12 +1,13 @@
-import { readCommonConfig } from '../../config/common.js';
 import { registerSchema } from '../auth/auth.schema.js';
 import { hashPassword } from '../auth/password.js';
 import { users } from './users.service.js';
 
 /** Creates the initial admin once using credentials supplied by the operator. */
-export async function ensureInitialAdmin(source, accounts = users) {
+export async function ensureInitialAdmin(
+  config = process.env,
+  accounts = users,
+) {
   if (await accounts.hasAdmin()) return false;
-  const config = source ?? (await readCommonConfig());
   if (!config.ADMIN_EMAIL && !config.ADMIN_PASSWORD) return false;
 
   const parsed = registerSchema.safeParse({
@@ -16,7 +17,7 @@ export async function ensureInitialAdmin(source, accounts = users) {
   });
   if (!parsed.success) {
     throw new Error(
-      'Set a valid admin name, email, and password (8 to 256 characters) in src/config/common.local.json',
+      'Set a valid admin name, email, and password (8 to 256 characters) in .env',
     );
   }
 

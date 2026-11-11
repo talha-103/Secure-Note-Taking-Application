@@ -9,7 +9,7 @@ try {
   console.log(
     created
       ? 'Initial admin created. Password change required on sign-in.'
-      : 'An admin already exists or the common configuration has no admin credentials.',
+      : 'An admin already exists or ADMIN_EMAIL and ADMIN_PASSWORD are unset.',
   );
 } catch (error) {
   console.error(error.message);
