@@ -32,7 +32,8 @@ export default function UsersPage() {
           event.preventDefault();
           run(async () => {
             const { _id, name, email, password, role, interests } = editing;
-            const body = { name, email, interests: parseInterests(interests) };
+            const body = { email, interests: parseInterests(interests) };
+            if (!_id || name.trim()) body.name = name;
             if (password || !_id) body.password = password;
             if (!ownAccount) body.role = role;
             await saveUser(http, _id, body);
@@ -46,7 +47,7 @@ export default function UsersPage() {
           <label>
             Name{' '}
             <input
-              required
+              required={!editing._id}
               maxLength={100}
               value={editing.name}
               onChange={change('name')}
@@ -69,7 +70,9 @@ export default function UsersPage() {
             {editing._id ? 'New password (optional)' : 'Password'}{' '}
             <input
               type="password"
+              autoComplete="new-password"
               minLength={8}
+              maxLength={256}
               required={!editing._id}
               value={editing.password}
               onChange={change('password')}

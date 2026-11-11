@@ -119,3 +119,32 @@ test('renders All Notes with author names and emails in a table', async () => {
   ).toBeInTheDocument();
   expect(screen.queryByText('owner-id')).not.toBeInTheDocument();
 });
+
+test('lets an admin change the password of an existing user without a name', async () => {
+  localStorage.setItem(key, 'admin-token');
+  const account = { ...user, _id: 'legacy-user', interests: [] };
+  global.fetch = jest.fn(async (path, options) => {
+    if (path === '/api/me') return response(200, { ...user, role: 'admin' });
+    if (options.method === 'PATCH') return response(200, account);
+    return response(200, { data: [account], page: 1, limit: 20, total: 1 });
+  });
+  renderAt('/admin/users');
+  fireEvent.click(await screen.findByRole('button', { name: 'Edit' }));
+  expect(screen.getByLabelText('Name')).not.toBeRequired();
+  fireEvent.change(screen.getByLabelText('New password (optional)'), {
+    target: { value: 'New password 123' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save user' }));
+  await waitFor(() => {
+    const [path, options] =
+      global.fetch.mock.calls.find(([, input]) => input.method === 'PATCH') ??
+      [];
+    expect(path).toBe('/api/admin/users/legacy-user');
+    expect(JSON.parse(options.body)).toEqual({
+      email: account.email,
+      interests: [],
+      role: 'user',
+      password: 'New password 123',
+    });
+  });
+});
