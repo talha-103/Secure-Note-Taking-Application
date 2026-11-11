@@ -6,7 +6,7 @@ The root package serves the Express API under /api. The React client exercises t
 | ---------------- | ------------- | ----------------------------------------- |
 | /login           | Visitor       | Sign in                                   |
 | /register        | Visitor       | Register with name and email              |
-| /change-password | Initial admin | Replace the temporary password            |
+| /change-password | Initial admin | Replace the temporary email and password  |
 | /notes           | Signed in     | List and manage owned notes               |
 | /posts           | Signed in     | Publish posts and browse all or by author |
 | /admin/notes     | Admin         | View all notes                            |

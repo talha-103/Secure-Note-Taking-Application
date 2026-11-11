@@ -3,7 +3,7 @@ import { changeInitialPassword } from '../api/auth';
 import { useAction } from '../components/useAction';
 import { useAuth } from '../context/AuthContext';
 
-/** Collects a replacement for the bootstrap admin's initial password. */
+/** Collects replacements for the bootstrap admin's initial email and password. */
 export default function ChangePasswordPage() {
   const { user, loading, http, startSession } = useAuth();
   const { busy, error, run } = useAction();
@@ -13,7 +13,7 @@ export default function ChangePasswordPage() {
 
   return (
     <section className="auth-panel" aria-labelledby="password-title">
-      <h2 id="password-title">Change your initial password</h2>
+      <h2 id="password-title">Change your initial email and password</h2>
       {error && <p role="alert">{error}</p>}
       <form
         onSubmit={(event) => {
@@ -27,12 +27,23 @@ export default function ChangePasswordPage() {
             startSession(
               await changeInitialPassword(http, {
                 currentPassword,
+                newEmail: fields.get('newEmail'),
                 newPassword,
               }),
             );
           });
         }}
       >
+        <label>
+          New email
+          <input
+            name="newEmail"
+            type="email"
+            autoComplete="email"
+            required
+            maxLength={254}
+          />
+        </label>
         <label>
           Current password
           <input
@@ -65,7 +76,7 @@ export default function ChangePasswordPage() {
             maxLength={256}
           />
         </label>
-        <button disabled={busy}>Change password</button>
+        <button disabled={busy}>Save new credentials</button>
       </form>
     </section>
   );

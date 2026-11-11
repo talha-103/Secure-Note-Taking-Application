@@ -7,7 +7,10 @@ export function requireAuth(auth, { allowPasswordSetup = false } = {}) {
     if (!token) throw new ApiError(401, 'Authentication required');
     req.user = await auth.authenticate(token);
     if (req.user.mustChangePassword && !allowPasswordSetup) {
-      throw new ApiError(403, 'Change your initial password to continue');
+      throw new ApiError(
+        403,
+        'Change your initial email and password to continue',
+      );
     }
     next();
   };

@@ -39,10 +39,10 @@ export function createUsersService(model = User) {
         { _id, passwordHash },
         { $set: { passwordHash: replacement } },
       ),
-    completePasswordSetup: (_id, passwordHash, replacement) =>
+    completePasswordSetup: (_id, passwordHash, credentials) =>
       model.findOneAndUpdate(
         { _id, passwordHash, mustChangePassword: true },
-        { $set: { passwordHash: replacement, mustChangePassword: false } },
+        { $set: { ...credentials, mustChangePassword: false } },
         { new: true },
       ),
     findIdentities: (ids) =>

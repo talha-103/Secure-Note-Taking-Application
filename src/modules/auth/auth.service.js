@@ -61,7 +61,10 @@ export function createAuthService(accounts, { JWT_SECRET, JWT_EXPIRES_IN }) {
       }
       return session(user);
     },
-    async changeInitialPassword(user, { currentPassword, newPassword }) {
+    async changeInitialPassword(
+      user,
+      { currentPassword, newEmail, newPassword },
+    ) {
       if (!user.mustChangePassword)
         throw new ApiError(409, 'Initial password setup is already complete');
       const account = await accounts.findCredentials(user.email);
@@ -72,13 +75,15 @@ export function createAuthService(accounts, { JWT_SECRET, JWT_EXPIRES_IN }) {
       ) {
         throw new ApiError(400, 'Current password is incorrect');
       }
+      if (newEmail === account.email)
+        throw new ApiError(400, 'Choose a different email');
       if (await verifyPassword(newPassword, account.passwordHash)) {
         throw new ApiError(400, 'Choose a different password');
       }
       const updated = await accounts.completePasswordSetup(
         user._id,
         account.passwordHash,
-        await hashPassword(newPassword),
+        { email: newEmail, passwordHash: await hashPassword(newPassword) },
       );
       if (!updated)
         throw new ApiError(

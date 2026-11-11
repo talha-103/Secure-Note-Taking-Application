@@ -14,6 +14,7 @@ export const registerSchema = z.object({
   interests: interests.optional(),
 });
 export const initialPasswordSchema = z.strictObject({
+  newEmail: email,
   currentPassword: z.string().min(1).max(256),
   newPassword: password,
 });

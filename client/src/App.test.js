@@ -163,11 +163,16 @@ test('routes an initial admin through password setup before opening admin pages'
     return response(200, { data: [], page: 1, limit: 20, total: 0 });
   });
   renderAt('/admin/users');
-  await screen.findByRole('heading', { name: 'Change your initial password' });
+  await screen.findByRole('heading', {
+    name: 'Change your initial email and password',
+  });
   expect(global.fetch).not.toHaveBeenCalledWith(
     '/api/admin/users?page=1',
     expect.anything(),
   );
+  fireEvent.change(screen.getByLabelText('New email'), {
+    target: { value: 'new-admin@example.com' },
+  });
   fireEvent.change(screen.getByLabelText('Current password'), {
     target: { value: 'temporary password' },
   });
@@ -177,7 +182,11 @@ test('routes an initial admin through password setup before opening admin pages'
   fireEvent.change(screen.getByLabelText('Confirm new password'), {
     target: { value: 'replacement password' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Save new credentials' }));
   await screen.findByRole('heading', { name: 'My notes' });
   expect(localStorage.getItem(key)).toBe('new-token');
+  const [, options] = global.fetch.mock.calls.find(
+    ([path]) => path === '/api/auth/initial-password',
+  );
+  expect(JSON.parse(options.body).newEmail).toBe('new-admin@example.com');
 });

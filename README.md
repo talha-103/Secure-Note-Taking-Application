@@ -19,7 +19,7 @@ node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 
 If the local common configuration does not exist, copy `src/config/common.example.json` to `src/config/common.local.json` and fill in `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. Git ignores the local file. The name defaults to `Administrator`. On startup, the server checks MongoDB for an existing admin and creates one only when none exists and credentials are configured. Use a unique email and a strong temporary password. `npm run seed` can run the same check separately.
 
-Sign in with the configured email and temporary password. The app requires a new password before granting access to notes, posts, or admin features. Later server starts preserve the existing admin and password.
+Sign in with the configured email and temporary password. The app requires a different email and a new password before granting access to notes, posts, or admin features. Later server starts preserve the existing admin and credentials.
 
 Run `npm run dev` and open <http://localhost:3000>. The client development proxy uses port 5000. Run `npm run server` to start only the API. To serve the production client through Express, run `npm run build --prefix client` and then `npm start`.
 
