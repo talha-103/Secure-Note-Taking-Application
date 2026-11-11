@@ -148,3 +148,36 @@ test('lets an admin change the password of an existing user without a name', asy
     });
   });
 });
+
+test('routes an initial admin through password setup before opening admin pages', async () => {
+  localStorage.setItem(key, 'setup-token');
+  const admin = { ...user, role: 'admin', mustChangePassword: true };
+  global.fetch = jest.fn(async (path) => {
+    if (path === '/api/me') return response(200, admin);
+    if (path === '/api/auth/initial-password') {
+      return response(200, {
+        token: 'new-token',
+        user: { ...admin, mustChangePassword: false },
+      });
+    }
+    return response(200, { data: [], page: 1, limit: 20, total: 0 });
+  });
+  renderAt('/admin/users');
+  await screen.findByRole('heading', { name: 'Change your initial password' });
+  expect(global.fetch).not.toHaveBeenCalledWith(
+    '/api/admin/users?page=1',
+    expect.anything(),
+  );
+  fireEvent.change(screen.getByLabelText('Current password'), {
+    target: { value: 'temporary password' },
+  });
+  fireEvent.change(screen.getByLabelText('New password', { exact: true }), {
+    target: { value: 'replacement password' },
+  });
+  fireEvent.change(screen.getByLabelText('Confirm new password'), {
+    target: { value: 'replacement password' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
+  await screen.findByRole('heading', { name: 'My notes' });
+  expect(localStorage.getItem(key)).toBe('new-token');
+});

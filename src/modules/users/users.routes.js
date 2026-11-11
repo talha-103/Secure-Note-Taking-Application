@@ -18,7 +18,11 @@ export function createUsersRouter(auth, users) {
   const signedIn = requireAuth(auth);
   const admin = [signedIn, requireRole('admin')];
 
-  router.get('/me', signedIn, controller.profile);
+  router.get(
+    '/me',
+    requireAuth(auth, { allowPasswordSetup: true }),
+    controller.profile,
+  );
   router.get(
     '/admin/users',
     admin,

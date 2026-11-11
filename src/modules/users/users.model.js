@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 const schema = new mongoose.Schema(
   {
+    mustChangePassword: { type: Boolean, default: false },
     name: { type: String, default: '' },
     email: { type: String, required: true },
     passwordHash: { type: String, required: true, select: false },

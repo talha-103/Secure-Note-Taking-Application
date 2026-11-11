@@ -17,7 +17,9 @@ Copy `.env.example` to `.env`. Set `MONGODB_URI` and use a random secret of at l
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Set `ADMIN_EMAIL` and `ADMIN_PASSWORD` in your shell, then run `npm run seed` to create the initial admin. The seed refuses to overwrite an existing account.
+Set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in your shell or local `.env` to configure the first admin. The name defaults to `Administrator`. On startup, the server checks MongoDB for an existing admin and creates one only when none exists and credentials are configured. Use a unique email and a strong temporary password. `npm run seed` can run the same check separately.
+
+Sign in with the configured email and temporary password. The app requires a new password before granting access to notes, posts, or admin features. Later server starts preserve the existing admin and password.
 
 Run `npm run dev` and open <http://localhost:3000>. The client development proxy uses port 5000. Run `npm run server` to start only the API. To serve the production client through Express, run `npm run build --prefix client` and then `npm start`.
 

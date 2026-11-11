@@ -9,7 +9,13 @@ export default function AuthForm({ creating = false }) {
   const { busy, error, run } = useAction();
 
   if (loading) return <p>Checking session…</p>;
-  if (user) return <Navigate to="/notes" replace />;
+  if (user)
+    return (
+      <Navigate
+        to={user.mustChangePassword ? '/change-password' : '/notes'}
+        replace
+      />
+    );
 
   return (
     <section className="auth-panel" aria-labelledby="auth-title">

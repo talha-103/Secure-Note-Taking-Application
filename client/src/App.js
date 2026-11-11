@@ -1,5 +1,6 @@
 import { Link, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import ChangePasswordPage from './pages/ChangePasswordPage';
 import RegisterPage from './pages/RegisterPage';
 import './ui.css';
 import SignInPage from './pages/SignInPage';
@@ -42,6 +43,8 @@ function RequireUser({ admin = false }) {
   const { user, loading } = useAuth();
   if (loading) return <p>Checking session…</p>;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.mustChangePassword)
+    return <Navigate to="/change-password" replace />;
   if (admin && user.role !== 'admin') return <Navigate to="/notes" replace />;
   return <Outlet />;
 }
@@ -54,6 +57,7 @@ export default function App() {
           <Route index element={<Navigate to="/login" replace />} />
           <Route path="login" element={<SignInPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="change-password" element={<ChangePasswordPage />} />
           <Route element={<RequireUser />}>
             <Route path="notes" element={<NotesPage />} />
             <Route path="posts" element={<PostsPage />} />

@@ -37,6 +37,7 @@ export function createApp({
     [
       '/login',
       '/register',
+      '/change-password',
       '/notes',
       '/posts',
       '/admin/notes',

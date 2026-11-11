@@ -4,8 +4,15 @@ import { ApiError } from '../../utils/ApiError.js';
 import { pageOffset, pageResult } from '../../utils/paginate.js';
 
 /** Projects the account fields permitted in API responses. */
-export function publicUser({ _id, name = '', email, role, interests }) {
-  return { _id, name, email, role, interests };
+export function publicUser({
+  _id,
+  name = '',
+  email,
+  role,
+  interests,
+  mustChangePassword = false,
+}) {
+  return { _id, name, email, role, interests, mustChangePassword };
 }
 
 /** Creates account persistence and management operations. */
@@ -22,6 +29,7 @@ export function createUsersService(model = User) {
   }
 
   return {
+    hasAdmin: () => model.exists({ role: 'admin' }),
     create: (fields) => model.create(fields),
     findCredentials: (email) =>
       model.findOne({ email }).select('+passwordHash'),
@@ -30,6 +38,12 @@ export function createUsersService(model = User) {
       model.updateOne(
         { _id, passwordHash },
         { $set: { passwordHash: replacement } },
+      ),
+    completePasswordSetup: (_id, passwordHash, replacement) =>
+      model.findOneAndUpdate(
+        { _id, passwordHash, mustChangePassword: true },
+        { $set: { passwordHash: replacement, mustChangePassword: false } },
+        { new: true },
       ),
     findIdentities: (ids) =>
       model
