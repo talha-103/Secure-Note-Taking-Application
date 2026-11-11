@@ -17,7 +17,7 @@ Copy `.env.example` to `.env`. Set `MONGODB_URI` and use a random secret of at l
 node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
 ```
 
-Set `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in your shell or local `.env` to configure the first admin. The name defaults to `Administrator`. On startup, the server checks MongoDB for an existing admin and creates one only when none exists and credentials are configured. Use a unique email and a strong temporary password. `npm run seed` can run the same check separately.
+If the local common configuration does not exist, copy `src/config/common.example.json` to `src/config/common.local.json` and fill in `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`. Git ignores the local file. The name defaults to `Administrator`. On startup, the server checks MongoDB for an existing admin and creates one only when none exists and credentials are configured. Use a unique email and a strong temporary password. `npm run seed` can run the same check separately.
 
 Sign in with the configured email and temporary password. The app requires a new password before granting access to notes, posts, or admin features. Later server starts preserve the existing admin and password.
 
