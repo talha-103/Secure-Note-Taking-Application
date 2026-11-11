@@ -7,6 +7,34 @@ import { pageOffset, pageResult } from '../../utils/paginate.js';
 export function createPostsService(users, model = Post) {
   return {
     add: (author, fields) => model.create({ ...fields, author }),
+    async listAll(options) {
+      const [rows, total] = await Promise.all([
+        model
+          .find()
+          .sort({ _id: -1 })
+          .skip(pageOffset(options))
+          .limit(options.limit)
+          .lean(),
+        model.countDocuments().hint('_id_'),
+      ]);
+      if (!rows.length) return pageResult(rows, options, total);
+      const ids = [...new Set(rows.map(({ author }) => String(author)))];
+      const identities = await users.findIdentities(ids);
+      const byId = new Map(
+        identities.map(({ _id, name, email }) => [
+          String(_id),
+          { name, email },
+        ]),
+      );
+      return pageResult(
+        rows.map((post) => ({
+          ...post,
+          authorProfile: byId.get(String(post.author)) ?? null,
+        })),
+        options,
+        total,
+      );
+    },
     async listByAuthor(author, options, byEmail = false) {
       const [result] = await users.aggregate([
         {

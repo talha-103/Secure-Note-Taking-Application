@@ -7,9 +7,9 @@ import { useAction } from '../components/useAction';
 import { usePage } from '../components/usePage';
 
 export default function PostsPage() {
-  const { http, user } = useAuth();
-  const [authorInput, setAuthorInput] = useState(user.email);
-  const [author, setAuthor] = useState(user.email);
+  const { http } = useAuth();
+  const [authorInput, setAuthorInput] = useState('');
+  const [author, setAuthor] = useState('');
   const [post, setPost] = useState(emptyContent);
   const load = useCallback(
     (client, page, signal) => listPosts(client, author, page, signal),
@@ -37,13 +37,21 @@ export default function PostsPage() {
         <label>
           Author email{' '}
           <input
-            required
             type="email"
             value={authorInput}
             onChange={(event) => setAuthorInput(event.target.value)}
           />
         </label>
         <button>Find posts</button>
+        <button
+          type="button"
+          onClick={() => {
+            setAuthorInput('');
+            selectAuthor('');
+          }}
+        >
+          Show all posts
+        </button>
       </form>
       <ContentForm
         value={post}
@@ -54,8 +62,8 @@ export default function PostsPage() {
           run(async () => {
             await publishPost(http, post);
             setPost(emptyContent);
-            setAuthorInput(user.email);
-            selectAuthor(user.email);
+            setAuthorInput('');
+            selectAuthor('');
           })
         }
       />
@@ -66,8 +74,12 @@ export default function PostsPage() {
           <tr key={item._id}>
             <td>{item.title}</td>
             <td>{item.content}</td>
-            <td>{listing.result.author?.name || '—'}</td>
-            <td>{listing.result.author?.email || author}</td>
+            <td>
+              {(item.authorProfile ?? listing.result.author)?.name || '—'}
+            </td>
+            <td>
+              {(item.authorProfile ?? listing.result.author)?.email || '—'}
+            </td>
           </tr>
         )}
       />

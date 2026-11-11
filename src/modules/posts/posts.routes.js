@@ -15,8 +15,8 @@ export function createPostsRouter(auth, posts) {
   router.get(
     '/posts',
     signedIn,
-    validate({ query: paginationSchema.extend({ email }) }),
-    controller.listByEmail,
+    validate({ query: paginationSchema.extend({ email: email.optional() }) }),
+    controller.list,
   );
   router.post(
     '/posts',

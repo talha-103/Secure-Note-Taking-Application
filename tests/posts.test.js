@@ -111,3 +111,65 @@ test('looks up posts by normalized email and returns the author identity', async
     email: 'author@example.com',
   });
 });
+
+test('lists other authors’ posts for users and admins without an email filter', async () => {
+  const row = { _id: 'post-id', author, title: 'Another author’s post' };
+  const posts = createPostsService(
+    {
+      async findIdentities(ids) {
+        assert.deepEqual(ids, [author]);
+        return [{ _id: author, name: 'Taylor', email: 'taylor@example.com' }];
+      },
+    },
+    {
+      find: () => ({
+        sort(order) {
+          assert.deepEqual(order, { _id: -1 });
+          return this;
+        },
+        skip(offset) {
+          assert.equal(offset, 0);
+          return this;
+        },
+        limit(limit) {
+          assert.equal(limit, 1);
+          return this;
+        },
+        lean: () => [row],
+      }),
+      countDocuments: () => ({ hint: () => 2 }),
+    },
+  );
+  const admin = '5f53fe68d17a92590c842813';
+  const api = request(
+    createApp({
+      env,
+      postService: posts,
+      accountStore: {
+        findById: async (_id) => ({
+          _id,
+          role: _id === admin ? 'admin' : 'user',
+        }),
+      },
+    }),
+  );
+  await api.get('/api/posts').expect(401);
+  for (const subject of [viewer, admin]) {
+    const token = jwt.sign({}, env.JWT_SECRET, { subject });
+    const response = await api
+      .get('/api/posts?limit=1')
+      .set('Authorization', 'Bearer ' + token)
+      .expect(200);
+    assert.deepEqual(response.body, {
+      data: [
+        {
+          ...row,
+          authorProfile: { name: 'Taylor', email: 'taylor@example.com' },
+        },
+      ],
+      page: 1,
+      limit: 1,
+      total: 2,
+    });
+  }
+});
